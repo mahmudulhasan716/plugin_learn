@@ -22,7 +22,9 @@ class ProductListing  {
        add_action('woocommerce_settings_tabs_custom_tab', [$this,'custom_woocommerce_settings_content' ]);
 
        add_action('admin_init', array($this, 'save_custom_woocommerce_settings'));
-       
+
+
+       add_action('shopify_product_add_cron', [$this, 'shopify_product_add_cron']);
     }
 
 
@@ -65,8 +67,6 @@ class ProductListing  {
     }
     }
 
-
-
     function my_custom_menu_page() {
         add_menu_page(
             'Wc Data Listing',    // Page title
@@ -90,12 +90,17 @@ class ProductListing  {
 
      function process_form_submission() {
         if (isset($_GET['action']) && $_GET['action'] === 'shopify_product_add') {
-            $this->shopify_product_add();
+             $this->shopify_product_add();
+             wp_schedule_single_event(time(), 'shopify_product_add_cron');
+          //  wp_next_scheduled('shopify_product_add_cron');
         }
     }
 
+    function shopify_product_add_cron() {
+      $this-> shopify_product_add();
+    }
+
     public function shopify_product_add(){
-        
        $shopify = \PHPShopify\ShopifySDK::config([
         'ShopUrl' => esc_attr(get_option('shopify_shop_url')) ,
         'AccessToken' =>  esc_attr(get_option('shopify_access_token')) ,
@@ -108,10 +113,10 @@ class ProductListing  {
     $new_product = array(
     'post_title' =>sanitize_text_field($product['title']),
     'post_content' => sanitize_text_field ($product['body_html']),
-    'regular_price' => sanitize_text_field ($product['variants'][0]['price']),  ,
+    'regular_price' => sanitize_text_field ($product['variants'][0]['price']),
     'stock' => sanitize_text_field($product['variants'][0]['inventory_quantity']),
     'sale_price' => sanitize_text_field($product['variants'][0]['compare_at_price']),
-    'thumbnail_url' => sanitize_text_field($product['images'][0]['src']),,
+    'thumbnail_url' => sanitize_text_field($product['images'][0]['src']),
     'post_status' => 'publish',
     'post_type' => 'product',
     'categories' => sanitize_text_field( $product['product_type']),
