@@ -92,34 +92,30 @@ class ProductListing  {
         if (isset($_GET['action']) && $_GET['action'] === 'shopify_product_add') {
             $this->shopify_product_add();
         }
-
     }
 
     public function shopify_product_add(){
         
        $shopify = \PHPShopify\ShopifySDK::config([
-        // 'ShopUrl' => "'" . esc_attr(get_option('shopify_shop_url')) . "'",
-        // 'AccessToken' => "'" . esc_attr(get_option('shopify_access_token')) . "'",
-        // 'ApiVersion' => "'" . esc_attr(get_option('shopify_api_version')) . "'",
-    
+        'ShopUrl' => esc_attr(get_option('shopify_shop_url')) ,
+        'AccessToken' =>  esc_attr(get_option('shopify_access_token')) ,
+        'ApiVersion' =>  esc_attr(get_option('shopify_api_version')) ,
         ]);
 
    $products = $shopify->Product->get();
 
     foreach($products as $product){
-    $image_url = $product['images'][0]['src'];
-    $product_price = $product['variants'][0]['price'];
-    $sale_price = $product['variants'][0]['compare_at_price'];
-
     $new_product = array(
     'post_title' =>sanitize_text_field($product['title']),
     'post_content' => sanitize_text_field ($product['body_html']),
-    'regular_price' => $product_price,
-    'stock' => '',
-    'sale_price' => $sale_price,
-    'thumbnail_url' => $image_url,
+    'regular_price' => sanitize_text_field ($product['variants'][0]['price']),  ,
+    'stock' => sanitize_text_field($product['variants'][0]['inventory_quantity']),
+    'sale_price' => sanitize_text_field($product['variants'][0]['compare_at_price']),
+    'thumbnail_url' => sanitize_text_field($product['images'][0]['src']),,
     'post_status' => 'publish',
     'post_type' => 'product',
+    'categories' => sanitize_text_field( $product['product_type']),
+    'tags' => sanitize_text_field( $product['tags']),
     );
     
     // $new_product = array(
@@ -137,21 +133,21 @@ class ProductListing  {
 
     public function create($args = []){
 
-        global $wpdb;
+       // global $wpdb;
         
-        $wpdb->insert(
-            $wpdb->posts,
-            array(
-                'post_title' => $args['post_title'],
-                'post_content' =>$args['post_content'],
-                'post_status' => 'publish',
-                'post_type' => 'product',
-            )
-        );
+        // $wpdb->insert(
+        //     $wpdb->posts,
+        //     array(
+        //         'post_title' => $args['post_title'],
+        //         'post_content' =>$args['post_content'],
+        //         'post_status' => 'publish',
+        //         'post_type' => 'product',
+        //     )
+        // );
 
-        // $product_id = wp_insert_post($new_product);
+         $product_id = wp_insert_post($args);
 
-        $product_id = $wpdb->insert_id;
+        //$product_id = $wpdb->insert_id;
 
         update_post_meta($product_id, '_regular_price', $args['regular_price']);
         update_post_meta($product_id, '_price', $args['sale_price']);
@@ -163,6 +159,21 @@ class ProductListing  {
         if (!is_wp_error($thumbnail_id)) {
             set_post_thumbnail($product_id, $thumbnail_id);
         }
+
+        if (!empty($args['tags'])) {
+        $tags = explode(',', $args['tags']);
+        wp_set_object_terms($product_id, $tags, 'product_tag', true);
+       // wp_set_post_tags($product_id, $tags, true);
+        }
+
+        if (!empty($args['categories'])) {
+        $categories = explode(',', $args['categories']);
+        wp_set_object_terms($product_id, $categories, 'product_cat', true);
+
+        // The  'product_cat' specifies the taxonomy where the terms should be set. 'product_cat' is the default taxonomy used for product categories in WooCommerce. Make sure to replace it with the actual taxonomy name for categories in your WordPress setup if it's different.
+}
+        
+
     }
         // $wpdb->insert(
         //     $wpdb->postmeta,
