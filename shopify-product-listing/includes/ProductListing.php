@@ -2,17 +2,20 @@
 
 namespace WeLabs\ShopifyProductListing;
 
+
+
+
 // use WeDevs\Dokan\Product\Manager as ProductManager;
 
-// use function \media_sideload_image;
+//  use function media_sideload_image();
 
-// require_once(ABSPATH . 'wp-admin/includes/file.php');
-// require_once(ABSPATH . 'wp-admin/includes/media.php');
-// require_once(ABSPATH . 'wp-admin/includes/image.php');
+require_once(ABSPATH . 'wp-admin/includes/file.php');
+require_once(ABSPATH . 'wp-admin/includes/media.php');
+require_once(ABSPATH . 'wp-admin/includes/image.php');
 
 // use Shopify\Clients\Rest;
 // extends ProductManager
-class ProductListing  {
+class ProductListing   {
 
     public function __construct(){
         // add_action( 'init', [$this, 'shopify_product_add'] );
@@ -22,7 +25,6 @@ class ProductListing  {
        add_action('woocommerce_settings_tabs_custom_tab', [$this,'custom_woocommerce_settings_content' ]);
 
        add_action('admin_init', array($this, 'save_custom_woocommerce_settings'));
-
 
        add_action('shopify_product_add_cron', [$this, 'shopify_product_add_cron']);
     }
@@ -84,15 +86,41 @@ class ProductListing  {
     <h2>My Custom Menu Page</h2>
     <p>This is where you can add your custom content.</p>
     <a href="?page=my-custom-menu&action=shopify_product_add" class="button">Store</a>
+
 </div>
 <?php
-    }
+         $file_path = plugin_dir_path(__FILE__) . 'inc_file/wp_list_table.php';
+            if (file_exists($file_path)) {
+                require_once $file_path;
+            } else {
+                error_log('File does not exist: ' . $file_path);
+            }
+            
+            $post_list_table = new WpList();
+            $post_list_table->prepare_items();
+            
+            echo '<form method="post">';
+            $post_list_table->process_bulk_action();
+            echo '</form>';
+             $post_list_table->display();
+
+            }
 
      function process_form_submission() {
         if (isset($_GET['action']) && $_GET['action'] === 'shopify_product_add') {
-             $this->shopify_product_add();
-             wp_schedule_single_event(time(), 'shopify_product_add_cron');
+           //  $this->shopify_product_add();
+         //    wp_schedule_single_event(time(), 'shopify_product_add_cron');
           //  wp_next_scheduled('shopify_product_add_cron');
+
+        //   $timestamp = strtotime('now');
+        //   wp_schedule_single_event($timestamp, 'shopify_product_add_cron');
+
+
+        ///woocommerce install thakle: 'hock name', array
+          as_enqueue_async_action(
+            'shopify_product_add_cron',
+            array()
+            );
         }
     }
 
@@ -160,7 +188,9 @@ class ProductListing  {
         // update_post_meta($product_id, '_sku', $sku);
 
         if ($args['thumbnail_url']) {
-        $thumbnail_id = media_sideload_image($args['thumbnail_url'], $product_id, '', 'id');
+         $thumbnail_id = media_sideload_image($args['thumbnail_url'], $product_id, '', 'id');
+         
+
         if (!is_wp_error($thumbnail_id)) {
             set_post_thumbnail($product_id, $thumbnail_id);
         }
@@ -191,6 +221,7 @@ class ProductListing  {
         // );
         
     }
+
 
     public function get_thumbnail_id($image) {
 

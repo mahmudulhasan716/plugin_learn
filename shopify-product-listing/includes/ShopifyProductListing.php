@@ -117,7 +117,31 @@ final class ShopifyProductListing {
         if ( $this->has_woocommerce() ) {
             $this->flush_rewrite_rules();
         }
+
+        $this->create_heartbeat_api_db_table();
     }
+
+    /**
+     * create heartbeat_message
+     */
+
+     private function create_heartbeat_api_db_table(){
+        global $wpdb;
+		$charset_collate = $wpdb->get_charset_collate();
+		$table_name      = $wpdb->prefix . 'heartbeat_messages';
+
+		$sql = "CREATE TABLE $table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            sender_id mediumint(9) NOT NULL,
+            recipient_id mediumint(9) NOT NULL,
+            message text NOT NULL,
+            timestamp datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+            PRIMARY KEY  (id)
+        ) $charset_collate;";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+     }
 
     /**
      * Flush rewrite rules after shopify_product_listing is activated or woocommerce is activated
@@ -213,6 +237,7 @@ final class ShopifyProductListing {
     public function init_classes() {
         $this->container['scripts'] = new Assets();
         new ProductListing();
+        new HeartBeatApi();
     }
 
     /**

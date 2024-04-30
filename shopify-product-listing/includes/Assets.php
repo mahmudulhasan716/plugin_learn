@@ -64,6 +64,7 @@ class Assets {
         wp_localize_script(
             'shopify_product_listing_admin_script', 'Shopify_Product_Listing_Admin', []
         );
+        wp_enqueue_script('jquery');
     }
 
     /**
