@@ -14,6 +14,11 @@ class HeartBeatApi {
 
         add_filter('heartbeat_received', [$this,'hapi_heartbeat_received'], 10, 2); // For logged in users
         add_filter('heartbeat_nopriv_received', [$this,'hapi_heartbeat_received'], 10, 2);
+
+        //  add_action('wp_ajax_get_data_from_other_user', [$this, 'hapi_heartbeat_received']);
+        //  add_action('wp_ajax_nopriv_get_data_from_other_user', [$this, 'hapi_heartbeat_received']); 
+         add_action('wp_ajax_get_data_from_other_user', [$this, 'get_data_from_other_user']);
+         add_action('wp_ajax_nopriv_get_data_from_other_user', [$this, 'get_data_from_other_user']); 
         
     }
 
@@ -47,12 +52,13 @@ class HeartBeatApi {
         <h2>Heartbeat API</h2>
         <input type="hidden" id="receiver_id" value="1">
         <input type="hidden" id="send_message_nonce" value="<?php echo wp_create_nonce( 'send_message_nonce' ); ?>">
-        <input type="text" id="my-input" placeholder="Type your message..." value="Hello" />
+        <input type="text" id="my-input" placeholder="Type your message..." value="" />
         <button id="send_message_button">Send</button>
     </div>
     <div>
         <h3> Receive Message </h3>
-        <p> <?php echo isset($response['message']) ? esc_html($response['message']) : ''; ?></p>
+        <p id="received-message"> </p>
+
     </div>
 </div>
 <?php
@@ -98,13 +104,52 @@ class HeartBeatApi {
 
     public function hapi_heartbeat_received($response, $data){
 
-        if ($data['message']) {
-             $response['message'] = $data['message'];
-             $response['status'] = 'success';
-           
-            }
+        // if ($data['message']) {
+        //      $response['message'] = $data['message'];
+        //      $response['status'] = 'success';
+        //     }
+        // return $response;
 
+
+         global $wpdb;
+        $table_name = $wpdb->prefix . 'message';
+
+        if ($data['message']) {
+            $new_data = $wpdb->get_results(
+            $wpdb->prepare(
+            "SELECT messages FROM $table_name WHERE messages = %s",$data['message']
+        ),
+            ARRAY_A
+        );
+         
+       //$messages = array_column($new_data, 'messages');
+
+        // Set the response message to the first message in the $messages array
+        if ($new_data) {
+            // $response['message'] = $new_data[0];
+            // $response['status'] = 'success';
+            // error_log('got it->'.$response['message']);
+
+            $message = $new_data[0]['messages'];
+            $response['message'] = $message;
+            $response['status'] = 'success';
+           // error_log('got it->'.$response['message']);
+        }
+         
+        }
         return $response;
     }
+
+    public function get_data_from_other_user() {
+    //     $response = array(
+    //     'message' => 'ok', // Set the message to "ok"
+    //     'status' => 'success', // Set the status to "success"
+    // );
+
+    // Send the JSON response
+    return $response;
+
+    }
+
 
 }

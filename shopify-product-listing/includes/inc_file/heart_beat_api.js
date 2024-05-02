@@ -10,7 +10,25 @@
 	// hook into heartbeat-tick: client logs server response to console
 	$(document).on('heartbeat-tick', function (e, data) {
 		if (data.status === 'success' && data.message) {
-			console.log('Response from server: ', data);
+			//console.log('Response from server: ', data);
+
+			$.ajax({
+				// url: '/wp-admin/admin-ajax.php',
+				method: 'POST',
+				data: {
+					action: 'get_data_from_other_user',
+				},
+				success: function (response) {
+					// Handle received data
+					console.log('Data received from another user');
+					//$('#received-message').text(response);
+
+					$('#received-message').text(data['message']);
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					console.error('Error receiving data from another user:', errorThrown);
+				},
+			});
 		}
 	});
 
